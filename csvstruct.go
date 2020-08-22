@@ -147,7 +147,16 @@ func NewDecoder(header []string, dst interface{}) (Decoder, error) {
 				field.SetUint(x)
 				return nil
 			}
-		case float32, float64:
+		case float32:
+			fn = func(field reflect.Value, s string) error {
+				x, err := strconv.ParseFloat(s, 32)
+				if err != nil {
+					return err
+				}
+				field.SetFloat(x)
+				return nil
+			}
+		case float64:
 			fn = func(field reflect.Value, s string) error {
 				x, err := strconv.ParseFloat(s, 64)
 				if err != nil {
