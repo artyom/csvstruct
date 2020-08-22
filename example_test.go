@@ -25,7 +25,7 @@ func ExampleDecoder() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dec, err := NewDecoder(header, Person{})
+	dec, err := NewDecoder(header, &Person{})
 	if err != nil {
 		log.Fatal(err)
 	}

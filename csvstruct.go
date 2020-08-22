@@ -1,7 +1,8 @@
 // Package csvstruct allows decoding of string slice obtained from a
 // csv.Reader.Read call into a struct type.
 //
-// It supports decoding to string, integer, and float struct fields.
+// It supports decoding to string, integer, float, boolean struct fields, and
+// fields with the type implementing Value interface.
 package csvstruct
 
 import (
@@ -11,19 +12,19 @@ import (
 	"strconv"
 )
 
-// NewDecoder takes CSV header and dst which must be a struct type or a pointer
-// to a struct type with struct "csv" tags mapped to header names, and returns
-// a Decoder function for this type and field ordering. It does not modify dst.
+// NewDecoder takes CSV header and dst which must be a pointer to a struct type
+// with struct "csv" tags mapped to header names, and returns a Decoder
+// function for this type and field ordering. It does not modify dst.
 //
 // Only exported fields are processed.
 func NewDecoder(header []string, dst interface{}) (Decoder, error) {
 	st := reflect.ValueOf(dst)
-	// if st.Kind() != reflect.Ptr {
-	// 	return nil, errors.New("dst must be a pointer to a struct type")
-	// }
+	if st.Kind() != reflect.Ptr {
+		panic("csvstruct: dst must be a pointer to a struct type")
+	}
 	st = reflect.Indirect(st)
 	if !st.IsValid() || st.Type().Kind() != reflect.Struct {
-		return nil, errors.New("dst must be either struct type or a pointer to a struct type")
+		panic("csvstruct: dst must be a pointer to a struct type")
 	}
 	var setters []setter
 	for i := 0; i < st.NumField(); i++ {
@@ -44,6 +45,17 @@ func NewDecoder(header []string, dst interface{}) (Decoder, error) {
 			continue
 		}
 		var fn func(reflect.Value, string) error // setter.fn
+		if val.CanAddr() && val.Addr().Type().Implements(valueType) {
+			fn = func(field reflect.Value, s string) error {
+				return field.Addr().Interface().(Value).Set(s)
+			}
+			setters = append(setters, setter{
+				csvIdx:   csvIdx,
+				fieldIdx: i,
+				fn:       fn,
+			})
+			continue
+		}
 		switch val.Interface().(type) {
 		case int:
 			fn = func(field reflect.Value, s string) error {
@@ -200,3 +212,11 @@ func indexOf(s []string, x string) int {
 	}
 	return -1
 }
+
+// Value is the interface implemented by types that can decode a string
+// representation to themselves.
+type Value interface {
+	Set(string) error
+}
+
+var valueType = reflect.TypeOf((*Value)(nil)).Elem()
