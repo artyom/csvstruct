@@ -2,7 +2,7 @@
 // csv.Reader.Read call into a struct type.
 //
 // It supports scanning values to string, integer, float, boolean struct
-// fields, and fields with the type implementing Value interface.
+// fields, and fields with the types implementing Value interface.
 package csvstruct
 
 import (
