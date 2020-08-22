@@ -1,6 +1,7 @@
 package csvstruct
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -77,4 +78,28 @@ type testDst struct {
 	Name   string `csv:"name"`
 	Age    uint8  `csv:"age"`
 	Ignore bool
+}
+
+func TestScanner_DifferentType(t *testing.T) {
+	scan, err := NewScanner([]string{"name", "age"}, &testDst{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	type testDst2 struct {
+		Name   string `csv:"name"`
+		Age    uint8  `csv:"age"`
+		Ignore bool
+		_      byte // <- differs from testDst type
+	}
+	var dst testDst2
+	defer func() {
+		p := recover()
+		if p == nil {
+			t.Fatal("using different types in NewScanner and Scanner should have panicked, but it's not")
+		}
+		if s, ok := p.(string); !ok || !strings.Contains(s, "different type") {
+			t.Fatalf("unexpected panic value: %v", p)
+		}
+	}()
+	t.Fatalf("Scanner returned on different types: %v", scan([]string{"John", "42"}, &dst))
 }

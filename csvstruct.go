@@ -191,8 +191,13 @@ func NewScanner(header []string, dst interface{}) (Scanner, error) {
 	if len(setters) == 0 {
 		return nil, errors.New("no matches found between header and csv-tagged struct fields")
 	}
+	originalType := reflect.ValueOf(dst).Type()
 	return func(row []string, dst interface{}) error {
-		st := reflect.Indirect(reflect.ValueOf(dst))
+		st := reflect.ValueOf(dst)
+		if st.Type() != originalType {
+			panic("csvstruct: Scanner called on the different type from the one used in the NewScanner call")
+		}
+		st = reflect.Indirect(st)
 		for _, s := range setters {
 			if err := s.fn(st.Field(s.fieldIdx), row[s.csvIdx]); err != nil {
 				return err
