@@ -5,16 +5,16 @@ import (
 	"time"
 )
 
-func TestDecoder(t *testing.T) {
+func TestScanner(t *testing.T) {
 	var dst testDst
-	decoder, err := NewDecoder([]string{"name", "age"}, &dst)
+	scan, err := NewScanner([]string{"name", "age"}, &dst)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if dst != (testDst{}) {
-		t.Fatalf("NewDecoder modified destination: %+v", dst)
+		t.Fatalf("NewScanner modified destination: %+v", dst)
 	}
-	if err := decoder([]string{"John", "42"}, &dst); err != nil {
+	if err := scan([]string{"John", "42"}, &dst); err != nil {
 		t.Fatal(err)
 	}
 	want := testDst{Name: "John", Age: 42}
@@ -41,14 +41,14 @@ func (t *myTime) Set(s string) error {
 
 func TestValue(t *testing.T) {
 	var dst testDstValue
-	decoder, err := NewDecoder([]string{"name", "time"}, &dst)
+	scan, err := NewScanner([]string{"name", "time"}, &dst)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if dst != (testDstValue{}) {
-		t.Fatalf("NewDecoder modified destination: %+v", dst)
+		t.Fatalf("NewScanner modified destination: %+v", dst)
 	}
-	if err := decoder([]string{"boom", "2020-04-01T12:00:00Z"}, &dst); err != nil {
+	if err := scan([]string{"boom", "2020-04-01T12:00:00Z"}, &dst); err != nil {
 		t.Fatal(err)
 	}
 	timestamp := time.Time(dst.Time)
@@ -57,15 +57,15 @@ func TestValue(t *testing.T) {
 	}
 }
 
-func BenchmarkDecoder(b *testing.B) {
-	decoder, err := NewDecoder([]string{"name", "age"}, &sink)
+func BenchmarkScanner(b *testing.B) {
+	scan, err := NewScanner([]string{"name", "age"}, &sink)
 	if err != nil {
 		b.Fatal(err)
 	}
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := decoder([]string{"John", "42"}, &sink); err != nil {
+		if err := scan([]string{"John", "42"}, &sink); err != nil {
 			b.Fatal(err)
 		}
 	}

@@ -19,13 +19,13 @@ Ken,Thompson,ken
 "Robert","Griesemer","gri"
 `
 
-func ExampleDecoder() {
+func ExampleScanner() {
 	r := csv.NewReader(strings.NewReader(Table))
 	header, err := r.Read()
 	if err != nil {
 		log.Fatal(err)
 	}
-	dec, err := NewDecoder(header, &Person{})
+	scan, err := NewScanner(header, &Person{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func ExampleDecoder() {
 			log.Fatal(err)
 		}
 		var person Person
-		if err := dec(record, &person); err != nil {
+		if err := scan(record, &person); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println(person.FirstName, person.LastName)

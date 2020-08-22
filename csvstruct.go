@@ -1,8 +1,8 @@
-// Package csvstruct allows decoding of string slice obtained from a
+// Package csvstruct allows scanning of string slice obtained from a
 // csv.Reader.Read call into a struct type.
 //
-// It supports decoding to string, integer, float, boolean struct fields, and
-// fields with the type implementing Value interface.
+// It supports scanning values to string, integer, float, boolean struct
+// fields, and fields with the type implementing Value interface.
 package csvstruct
 
 import (
@@ -12,12 +12,12 @@ import (
 	"strconv"
 )
 
-// NewDecoder takes CSV header and dst which must be a pointer to a struct type
-// with struct "csv" tags mapped to header names, and returns a Decoder
+// NewScanner takes CSV header and dst which must be a pointer to a struct type
+// with struct "csv" tags mapped to header names, and returns a Scanner
 // function for this type and field ordering. It does not modify dst.
 //
 // Only exported fields are processed.
-func NewDecoder(header []string, dst interface{}) (Decoder, error) {
+func NewScanner(header []string, dst interface{}) (Scanner, error) {
 	st := reflect.ValueOf(dst)
 	if st.Kind() != reflect.Ptr {
 		panic("csvstruct: dst must be a pointer to a struct type")
@@ -208,10 +208,10 @@ type setter struct {
 	fn       func(field reflect.Value, s string) error
 }
 
-// Decoder is a function that decodes CSV row to dst, which must be a pointer
-// to a struct type. Decoder must be called on the same type it was created
-// from by the NewDecoder call.
-type Decoder func(row []string, dst interface{}) error
+// Scanner is a function that scans CSV row to dst, which must be a pointer to
+// a struct type. Scanner must be called on the same type it was created from
+// by the NewScanner call.
+type Scanner func(row []string, dst interface{}) error
 
 func indexOf(s []string, x string) int {
 	for i := range s {
@@ -222,7 +222,7 @@ func indexOf(s []string, x string) int {
 	return -1
 }
 
-// Value is the interface implemented by types that can decode a string
+// Value is the interface implemented by types that can convert a string
 // representation to themselves.
 type Value interface {
 	Set(string) error
