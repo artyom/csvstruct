@@ -2,10 +2,12 @@
 // csv.Reader.Read call into a struct type.
 //
 // It supports scanning values to string, integer, float, boolean struct
-// fields, and fields with the types implementing Value interface.
+// fields, and fields with the types implementing encoding.TextUnmarshaler or
+// Value interfaces.
 package csvstruct
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
 	"reflect"
@@ -45,6 +47,17 @@ func NewScanner(header []string, dst interface{}) (Scanner, error) {
 			continue
 		}
 		var fn func(reflect.Value, string) error // setter.fn
+		if val.CanAddr() && val.Addr().Type().Implements(textUnmarshalerType) {
+			fn = func(field reflect.Value, s string) error {
+				return field.Addr().Interface().(encoding.TextUnmarshaler).UnmarshalText([]byte(s))
+			}
+			setters = append(setters, setter{
+				csvIdx:   csvIdx,
+				fieldIdx: i,
+				fn:       fn,
+			})
+			continue
+		}
 		if val.CanAddr() && val.Addr().Type().Implements(valueType) {
 			fn = func(field reflect.Value, s string) error {
 				return field.Addr().Interface().(Value).Set(s)
@@ -229,8 +242,11 @@ func indexOf(s []string, x string) int {
 
 // Value is the interface implemented by types that can convert a string
 // representation to themselves.
+//
+// Deprecated: Please consider using encoding.TextUnmarshaler interface instead.
 type Value interface {
 	Set(string) error
 }
 
 var valueType = reflect.TypeOf((*Value)(nil)).Elem()
+var textUnmarshalerType = reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()

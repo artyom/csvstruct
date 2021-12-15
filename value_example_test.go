@@ -10,21 +10,8 @@ import (
 )
 
 type Event struct {
-	Name string `csv:"name"`
-	Time myTime `csv:"timestamp"`
-}
-
-type myTime struct {
-	time.Time
-}
-
-func (t *myTime) Set(s string) error {
-	t2, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return err
-	}
-	t.Time = t2
-	return nil
+	Name string    `csv:"name"`
+	Time time.Time `csv:"timestamp"` // see https://pkg.go.dev/time#Time.UnmarshalText
 }
 
 const EventsTable = `name,timestamp
